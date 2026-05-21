@@ -121,7 +121,8 @@ def _check_write_access():
         return None
     if API_SECRET:
         return jsonify({'error': 'Unauthorized'}), 401
-    return jsonify({'error': 'Forbidden: remote writes disabled'}), 403
+    # API_SECRET 미설정 시 원격 쓰기 허용 (사내망 전용 배포)
+    return None
 
 
 def _etag_for_file() -> str:
