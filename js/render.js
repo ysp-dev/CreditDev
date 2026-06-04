@@ -215,7 +215,7 @@ function _buildGanttRowEl(p, rowIdx) {
     });
     div.innerHTML = `
         <div class="project-info">
-            <span class="team-tag ${styles.light}" style="font-size:9px; padding:1px 4px;">${escapeHtml(p.team)}</span>
+            <span class="team-tag ${styles.light}">${escapeHtml(p.team)}</span>
             <div class="project-name">${escapeHtml(p.name)}</div>
             <div class="project-meta">
                 <span class="project-meta-sep">·</span>

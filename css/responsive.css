@@ -11,6 +11,11 @@
     .form-grid { grid-template-columns: repeat(2, 1fr); }
     .io-toolbar { flex-wrap: wrap; gap: 5px; }
     .gantt-content { min-width: 1100px; }
+    .gantt-row .team-tag { font-size: 9px; }
+    .project-name { font-size: 1rem; }
+    .project-meta { font-size: 0.72rem; }
+    .gantt-comfortable .project-name { font-size: 0.9rem; }
+    .gantt-compact .project-name { font-size: 0.78rem; }
 
     /* 단계 블록 — 단계명/시작일/종료일 3열 + 설명 전체폭 */
     .phase-block-body {
@@ -79,8 +84,11 @@
     .gantt-header h2 { font-size: 0.9rem; }
     .gantt-scroll { padding: 8px; }
     .gantt-content { min-width: 900px; }
+    .gantt-row .team-tag { font-size: 9px; }
     .project-name { font-size: 0.82rem; }
     .project-meta { font-size: 0.65rem; }
+    .gantt-comfortable .project-name { font-size: 0.9rem; }
+    .gantt-compact .project-name { font-size: 0.78rem; }
 
     /* 카드뷰 */
     .card-grid { grid-template-columns: 1fr; }
