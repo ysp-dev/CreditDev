@@ -34,7 +34,7 @@
     transform: translateZ(0);
     -webkit-overflow-scrolling: touch;
 }
-.gantt-content { min-width: 1400px; position: relative; padding-right: 80px; }
+.gantt-content { min-width: 1720px; position: relative; padding-right: 80px; }
 
 .timeline-header {
     display: grid;

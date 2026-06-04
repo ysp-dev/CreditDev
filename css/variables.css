@@ -15,7 +15,7 @@
     --accent: #FFD338;             /* KB Yellow Web — 하이라이트 */
     --red: #FF0000;                /* KB Negative */
     --gold: #FFBC00;               /* KB Yellow CI */
-    --sidebar-width: 320px;
+    --sidebar-width: 640px;
 
     /* ── 단계 막대 — Yellow→Amber 계열 ── */
     --phase-1: #ffd347;
