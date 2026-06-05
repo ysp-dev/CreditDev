@@ -1,12 +1,57 @@
-// 10분 주기 서버 데이터 자동 갱신
-const AUTO_REFRESH_INTERVAL = 10 * 60 * 1000;
+// 08:30~20:00, 30분 단위 서버 데이터 자동 갱신
+const REFRESH_START_HOUR = 8,  REFRESH_START_MIN = 30;
+const REFRESH_END_HOUR   = 20, REFRESH_END_MIN   = 0;
+const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
+
+let _periodicTimer = null;
+let _periodicCountdownInterval = null;
+
+function _getNextRefreshTime() {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(midnight); todayStart.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
+    const todayEnd   = new Date(midnight); todayEnd.setHours(REFRESH_END_HOUR, REFRESH_END_MIN, 0, 0);
+    if (now < todayStart) return new Date(todayStart);
+    if (now >= todayEnd) {
+        const tmr = new Date(midnight); tmr.setDate(tmr.getDate() + 1); tmr.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
+        return tmr;
+    }
+    const elapsed = now.getTime() - midnight.getTime();
+    const nextCount = Math.ceil((elapsed + 1) / REFRESH_INTERVAL_MS);
+    const next = new Date(midnight.getTime() + nextCount * REFRESH_INTERVAL_MS);
+    if (next > todayEnd) {
+        const tmr = new Date(midnight); tmr.setDate(tmr.getDate() + 1); tmr.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
+        return tmr;
+    }
+    return next;
+}
+
+function _updatePeriodicCountdown() {
+    const el = document.getElementById('io-idle-countdown');
+    if (!el || el.dataset.source === 'idle') return;
+    if (AppState.currentScreen === 'admin') { el.style.display = 'none'; return; }
+    const next = _getNextRefreshTime();
+    const diffMin = Math.ceil((next.getTime() - Date.now()) / 60000);
+    el.style.display = '';
+    el.dataset.source = 'periodic';
+    el.textContent = `· 새로고침 ${Math.max(1, diffMin)}분 전`;
+}
 
 function _startPeriodicRefresh() {
-    setInterval(async () => {
-        if (AppState.currentScreen === 'admin') return;
-        AppState.projects = await loadFromStorage();
-        renderDashboard();
-    }, AUTO_REFRESH_INTERVAL);
+    function schedule() {
+        const next = _getNextRefreshTime();
+        _periodicTimer = setTimeout(async () => {
+            if (AppState.currentScreen !== 'admin') {
+                AppState.projects = await loadFromStorage();
+                renderDashboard();
+            }
+            schedule();
+        }, Math.max(1000, next.getTime() - Date.now()));
+    }
+    _updatePeriodicCountdown();
+    clearInterval(_periodicCountdownInterval);
+    _periodicCountdownInterval = setInterval(_updatePeriodicCountdown, 60000);
+    schedule();
 }
 
 // 1시간 주기 페이지 자동 리로드 (관리자 화면이거나 편집 중이면 건너뜀)
@@ -164,10 +209,13 @@ function _updateCountdownEl(secs) {
     const el = document.getElementById('io-idle-countdown');
     if (!el) return;
     if (secs === null) {
-        if (el.style.display !== 'none') { el.style.display = 'none'; el.textContent = ''; }
+        // idle 종료 → 주기 카운트다운으로 복원
+        delete el.dataset.source;
+        _updatePeriodicCountdown();
         return;
     }
     el.style.display = '';
+    el.dataset.source = 'idle';
     el.textContent = `· 새로고침 ${secs}분 전`;
 }
 
