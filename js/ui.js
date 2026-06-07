@@ -1,5 +1,5 @@
-// 08:30~20:00, 30분 단위 서버 데이터 자동 갱신
-const REFRESH_START_HOUR = 8,  REFRESH_START_MIN = 30;
+// 08:00~20:00, 30분 단위 서버 데이터 자동 갱신
+const REFRESH_START_HOUR = 8,  REFRESH_START_MIN = 0;
 const REFRESH_END_HOUR   = 20, REFRESH_END_MIN   = 0;
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -12,7 +12,8 @@ function _getNextRefreshTime() {
     const todayStart = new Date(midnight); todayStart.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
     const todayEnd   = new Date(midnight); todayEnd.setHours(REFRESH_END_HOUR, REFRESH_END_MIN, 0, 0);
     if (now < todayStart) return new Date(todayStart);
-    if (now >= todayEnd) {
+    if (now.getTime() === todayEnd.getTime()) return new Date(todayEnd);
+    if (now > todayEnd) {
         const tmr = new Date(midnight); tmr.setDate(tmr.getDate() + 1); tmr.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
         return tmr;
     }
@@ -28,13 +29,23 @@ function _getNextRefreshTime() {
 
 function _updatePeriodicCountdown() {
     const el = document.getElementById('io-idle-countdown');
-    if (!el || el.dataset.source === 'idle') return;
+    if (!el) return;
     if (AppState.currentScreen === 'admin') { el.style.display = 'none'; return; }
-    const next = _getNextRefreshTime();
-    const diffMin = Math.ceil((next.getTime() - Date.now()) / 60000);
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(midnight); todayStart.setHours(REFRESH_START_HOUR, REFRESH_START_MIN, 0, 0);
+    const todayEnd   = new Date(midnight); todayEnd.setHours(REFRESH_END_HOUR, REFRESH_END_MIN, 0, 0);
     el.style.display = '';
     el.dataset.source = 'periodic';
-    el.textContent = `· 새로고침 ${Math.max(1, diffMin)}분 전`;
+    if (now >= todayEnd) {
+        el.textContent = `· 새로고침 다음 날 ${REFRESH_START_HOUR}시`;
+    } else if (now < todayStart) {
+        el.textContent = `· 새로고침 오늘 ${REFRESH_START_HOUR}시`;
+    } else {
+        const next = _getNextRefreshTime();
+        const diffMin = Math.ceil((next.getTime() - Date.now()) / 60000);
+        el.textContent = `· 새로고침 ${Math.max(1, diffMin)}분 전`;
+    }
 }
 
 function _startPeriodicRefresh() {
@@ -45,20 +56,15 @@ function _startPeriodicRefresh() {
                 AppState.projects = await loadFromStorage();
                 renderDashboard();
             }
+            _updatePeriodicCountdown();
             schedule();
-        }, Math.max(1000, next.getTime() - Date.now()));
+        }, Math.max(0, next.getTime() - Date.now()));
     }
     _updatePeriodicCountdown();
     clearInterval(_periodicCountdownInterval);
     _periodicCountdownInterval = setInterval(_updatePeriodicCountdown, 60000);
     schedule();
 }
-
-// 1시간 주기 페이지 자동 리로드 (관리자 화면이거나 편집 중이면 건너뜀)
-setInterval(() => {
-    if (AppState.currentScreen === 'admin' || AppState.formDirty || AppState.editingProjectId != null) return;
-    location.reload();
-}, 60 * 60 * 1000);
 
 // 화면 보호기 방지 (Wake Lock + Canvas video 이중 방어)
 (function () {
@@ -197,59 +203,6 @@ setInterval(() => {
     };
 })();
 
-// 대시보드 유휴 자동 새로고침 (10분 무액션 시 리로드, 1분 경과 후 카운트다운 표시)
-let _idleTimer = null;
-let _idleShowTimer = null;
-let _idleCountdownInterval = null;
-const IDLE_TIMEOUT = 10 * 60 * 1000;
-const IDLE_SHOW_AFTER = 60 * 1000;
-const _idleEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-
-function _updateCountdownEl(secs) {
-    const el = document.getElementById('io-idle-countdown');
-    if (!el) return;
-    if (secs === null) {
-        // idle 종료 → 주기 카운트다운으로 복원
-        delete el.dataset.source;
-        _updatePeriodicCountdown();
-        return;
-    }
-    el.style.display = '';
-    el.dataset.source = 'idle';
-    el.textContent = `· 새로고침 ${secs}분 전`;
-}
-
-function _resetIdleTimer() {
-    clearTimeout(_idleTimer);
-    clearTimeout(_idleShowTimer);
-    clearInterval(_idleCountdownInterval);
-    _updateCountdownEl(null);
-
-    _idleShowTimer = setTimeout(() => {
-        let remaining = Math.round((IDLE_TIMEOUT - IDLE_SHOW_AFTER) / 60000);
-        _updateCountdownEl(remaining);
-        _idleCountdownInterval = setInterval(() => {
-            remaining -= 1;
-            _updateCountdownEl(remaining > 0 ? remaining : 0);
-        }, 60000);
-    }, IDLE_SHOW_AFTER);
-
-    _idleTimer = setTimeout(() => location.reload(), IDLE_TIMEOUT);
-}
-
-function _startIdleReload() {
-    _idleEvents.forEach(e => document.addEventListener(e, _resetIdleTimer, { passive: true }));
-    _resetIdleTimer();
-}
-
-function _stopIdleReload() {
-    clearTimeout(_idleTimer);
-    clearTimeout(_idleShowTimer);
-    clearInterval(_idleCountdownInterval);
-    _updateCountdownEl(null);
-    _idleEvents.forEach(e => document.removeEventListener(e, _resetIdleTimer));
-}
-
 function switchView(view, isEdit = false) {
     if (view === 'dashboard' && AppState.formDirty) {
         if (!confirm('입력 중인 내용이 있습니다.\n대시보드로 이동하면 변경 사항이 사라집니다.\n계속하시겠습니까?')) return;
@@ -266,11 +219,10 @@ function switchView(view, isEdit = false) {
         AppState.currentFilter = '전체';
         AppState.currentSearch = '';
         const si = document.getElementById('search-input'); if (si) si.value = '';
-        _startIdleReload();
+        _updatePeriodicCountdown();
         renderDashboard();
     } else {
         AppState.currentScreen = 'admin';
-        _stopIdleReload();
         document.getElementById('dashboardView').style.display = 'none';
         const av = document.getElementById('adminView');
         av.style.display = 'block';

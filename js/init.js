@@ -214,7 +214,6 @@ window.onload = () => {
 
     initData();
     initTagInput();
-    _startIdleReload();
     _startPeriodicRefresh();
     _startWakeLock();
     if (typeof _initSocket === 'function') _initSocket();
