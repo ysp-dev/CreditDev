@@ -16,8 +16,40 @@
     <link rel="stylesheet" href="css/dark.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/ie.css">
+    <link rel="stylesheet" href="css/smartwork.css">
 </head>
 <body>
+    <!-- Smart Work Timer Modal -->
+    <div id="swt-overlay" class="swt-overlay" onclick="swtClose()">
+      <div class="swt-modal" onclick="event.stopPropagation()">
+        <div class="swt-aurora"></div>
+        <div class="swt-glow-center"></div>
+        <svg width="0" height="0" style="position:absolute">
+          <defs>
+            <linearGradient id="swt-ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#fff4cc"/>
+              <stop offset="50%" stop-color="#FFD338"/>
+              <stop offset="100%" stop-color="#FFBC00"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="swt-inner">
+          <div class="swt-badge">✦ FOCUS TIME ✦</div>
+          <h1 class="swt-title">스마트 워크 타임</h1>
+          <p class="swt-time" id="swt-time-label"></p>
+          <p class="swt-sub">집중 근무 시간이 시작되었습니다</p>
+          <div class="swt-ring-wrap">
+            <svg class="swt-ring" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" class="swt-ring-track"/>
+              <circle cx="60" cy="60" r="52" class="swt-ring-fill" id="swt-ring-fill"/>
+            </svg>
+            <span class="swt-ring-count" id="swt-ring-count">180</span>
+          </div>
+          <button class="swt-dismiss" onclick="swtClose()">닫기</button>
+        </div>
+      </div>
+    </div>
+
     <div id="ie-overlay" style="display:none;">
         <div class="ie-box">
             <div class="ie-icon">🔷</div>
@@ -107,6 +139,15 @@
                             <input class="search-input" type="search" id="search-input" placeholder="통합 검색..." onkeydown="if(event.key==='Enter')setSearch(this.value)">
                             <button class="search-btn" onclick="setSearch(document.getElementById('search-input').value)">검색</button>
                         </div>
+                    </div>
+                    <div id="swt-header-indicator" class="swt-header-indicator" aria-live="polite">
+                      <div class="swt-indicator-kicker">FOCUS TIME</div>
+                      <div class="swt-indicator-main">스마트 워크 타임</div>
+                      <div class="swt-indicator-detail">
+                        <span id="swt-indicator-time"></span>
+                        <span id="swt-indicator-remain"></span>
+                      </div>
+                      <div class="swt-indicator-bar"><span id="swt-indicator-progress"></span></div>
                     </div>
                 </div>
                 <!-- 연도·팀필터·태그 -->
@@ -376,5 +417,6 @@
     <script src="js/init.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/socket.js"></script>
+    <script src="js/smartwork.js"></script>
 </body>
 </html>
