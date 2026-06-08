@@ -191,6 +191,30 @@ const _ganttCache = new Map(); // projId -> { el, sig }
 const _cardCache  = new Map(); // projId -> { el, sig }
 const _listCache  = new Map(); // projId -> { el, sig, idx }
 
+function _sortForGantt(projects, now) {
+    const today = new Date(now); today.setHours(0, 0, 0, 0);
+    const openTime = p => {
+        const d = parseDate(p.open);
+        return d && !isNaN(d) ? d.getTime() : Number.MAX_SAFE_INTEGER;
+    };
+    const fallback = (a, b) =>
+        String(a.name || '').localeCompare(String(b.name || ''), 'ko') ||
+        String(a.id || '').localeCompare(String(b.id || ''));
+
+    return projects.slice().sort((a, b) => {
+        const aOpen = openTime(a);
+        const bOpen = openTime(b);
+        const aDone = aOpen < today.getTime();
+        const bDone = bOpen < today.getTime();
+
+        if (aDone !== bDone) return aDone ? 1 : -1;
+
+        const dateDiff = aOpen - bOpen;
+        if (dateDiff !== 0) return aDone ? -dateDiff : dateDiff;
+        return fallback(a, b);
+    });
+}
+
 // Signature captures all fields that affect rendering, plus date and theme
 function _projSig(p) {
     return document.documentElement.getAttribute('data-theme') + '|' +
@@ -486,6 +510,7 @@ function renderDashboard() {
     }
     const now = new Date();
     const todayMidnight = new Date(now); todayMidnight.setHours(0,0,0,0);
+    const ganttSorted = _sortForGantt(filtered, now);
 
     const statCount   = filtered.length;
     const statOngoing = filtered.filter(p => new Date(p.open) > todayMidnight).length;
@@ -536,7 +561,7 @@ function renderDashboard() {
     }
 
     requestAnimationFrame(() => {
-        _reconcileGantt(ganttContainer, filtered);
+        _reconcileGantt(ganttContainer, ganttSorted);
         _reconcileCards(cardContainer, filtered, q, now);
         if (AppState.currentView === 'list') renderListView(filtered, now);
         requestAnimationFrame(() => { autoFitBarFonts(); autoFitCardTitles(); drawDepLines(); });
