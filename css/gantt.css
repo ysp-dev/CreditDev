@@ -117,16 +117,14 @@
 }
 
 .today-line {
-    position: absolute; top: 0; bottom: 0; width: 2px;
+    position: absolute; top: 0; bottom: -9px; width: 1px;
     background: linear-gradient(to bottom,
         transparent 0%,
         rgba(255,90,90,0.95) 4%,
         #ff5555 12%,
-        #ff5555 88%,
-        rgba(255,90,90,0.95) 96%,
-        transparent 100%);
+        #ff5555 100%);
     z-index: 50; pointer-events: none;
-    filter: drop-shadow(0 0 5px rgba(255,85,85,0.85)) drop-shadow(0 0 2px rgba(255,85,85,0.6));
+    filter: drop-shadow(0 0 3px rgba(255,85,85,0.7));
 }
 .today-dot {
     position: absolute; top: 18px; left: 50%; transform: translateX(-50%) translateZ(0);
@@ -146,6 +144,16 @@
 .past-overlay {
     position: absolute; top: 0; bottom: 0; left: 0;
     background: rgba(15, 23, 42, 0.035); pointer-events: none; z-index: 1;
+}
+
+/* 투데이 세로선 — 모든 행을 끊김 없이 관통하는 단일 오버레이 */
+#gantt-rows { position: relative; }
+.today-line-overlay {
+    position: absolute; top: -9px; bottom: 0; width: 1px;
+    left: calc(var(--sidebar-width) + var(--today-line-ratio, 0) * (100% - var(--sidebar-width)));
+    background: #ff5555;
+    z-index: 50; pointer-events: none;
+    filter: drop-shadow(0 0 3px rgba(255,85,85,0.7));
 }
 
 /* ── Gantt 디자인 고도화 ── */

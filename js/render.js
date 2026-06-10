@@ -50,7 +50,7 @@ function buildBarAreaHtml(p) {
         return `<div class="grid-line${isCur?' current-month-bar':''}"></div>`;
     }).join('');
     const todayHtml = todayPos!==null
-        ? `<div class="past-overlay" style="width:${todayPos}%;"></div><div class="today-line" style="left:${todayPos}%;"></div>` : '';
+        ? `<div class="past-overlay" style="width:${todayPos}%;"></div>` : '';
     const milestoneLabel = openInPast ? '' : formatOpenTag(p.open);
     const milestoneTitle = openInPast ? ` title="${p.open} 오픈 (전년도)"` : '';
     return gridLines + todayHtml + bars +
@@ -416,7 +416,7 @@ function _reconcileGantt(container, filtered) {
         if (!newIds.has(id)) { entry.el.remove(); _ganttCache.delete(id); }
     }
 
-    [...container.children].forEach(el => { if (!el.dataset.projId) el.remove(); });
+    [...container.children].forEach(el => { if (!el.dataset.projId && !el.classList.contains('today-line-overlay')) el.remove(); });
 
     filtered.forEach((p, rowIdx) => {
         const sig = _projSig(p);
@@ -562,6 +562,14 @@ function renderDashboard() {
 
     requestAnimationFrame(() => {
         _reconcileGantt(ganttContainer, ganttSorted);
+        // 단일 투데이 오버레이 선 (행 경계를 끊김 없이 관통)
+        let overlay = ganttContainer.querySelector('.today-line-overlay');
+        if (todayPos !== null) {
+            if (!overlay) { overlay = document.createElement('div'); overlay.className = 'today-line-overlay'; ganttContainer.appendChild(overlay); }
+            ganttContainer.style.setProperty('--today-line-ratio', (todayPos / 100).toFixed(6));
+        } else if (overlay) {
+            overlay.remove();
+        }
         _reconcileCards(cardContainer, filtered, q, now);
         if (AppState.currentView === 'list') renderListView(filtered, now);
         requestAnimationFrame(() => { autoFitBarFonts(); autoFitCardTitles(); drawDepLines(); });
