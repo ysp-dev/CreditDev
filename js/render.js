@@ -515,12 +515,15 @@ function renderDashboard() {
     const statCount   = filtered.length;
     const statOngoing = filtered.filter(p => new Date(p.open) > todayMidnight).length;
     const statDone    = filtered.filter(p => new Date(p.open) <= todayMidnight).length;
-    const statEarly   = filtered.filter(p => { const d = new Date(p.open); return d.getFullYear() === AppState.currentYear && d.getMonth() < 6; }).length;
+    const statMonthOpen = filtered.filter(p => {
+        const d = new Date(p.open);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
     document.getElementById('detail-count').innerText = `총 ${statCount.toLocaleString()}건`;
     _countUp('stat-count',     statCount,   v => `${Math.round(v).toLocaleString()}건`, statCount   === 0 ? '#94a3b8' : 'var(--primary)');
     _countUp('stat-ongoing',   statOngoing, v => `${Math.round(v).toLocaleString()}건`, statOngoing === 0 ? '#94a3b8' : 'var(--blue)');
     _countUp('stat-done',      statDone,    v => `${Math.round(v).toLocaleString()}건`, statDone    === 0 ? '#94a3b8' : 'var(--emerald)');
-    _countUp('stat-early-open', statEarly,  v => `${Math.round(v).toLocaleString()}건`, statEarly   === 0 ? '#94a3b8' : 'var(--emerald)');
+    _countUp('stat-month-open', statMonthOpen, v => `${Math.round(v).toLocaleString()}건`, statMonthOpen === 0 ? '#94a3b8' : 'var(--emerald)');
 
     const todayPos = now.getFullYear() === AppState.currentYear ? getDatePos(now) : null;
     let monthHtml = Array.from({length: 12}, (_, i) => {
